@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fff4d6">
+  <meta name="description" content="Little Genius Club - fun learning for children aged 4 to 8.">
+  <title>Little Genius Club</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #fff9ed;
+      color: #303451;
+    }
+    header {
+      padding: 24px 16px;
+      text-align: center;
+      background: linear-gradient(135deg, #ffe5a5, #ffd9e9, #d9e8ff);
+      border-radius: 0 0 28px 28px;
+    }
+    header h1 { margin: 0; font-size: 29px; }
+    header p { margin-bottom: 0; }
+    .stars {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 14px;
+      background: white;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+    main { max-width: 850px; margin: auto; padding: 18px; }
+    h2 { font-size: 21px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    button {
+      font: inherit;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .card {
+      min-height: 125px;
+      border: 0;
+      border-radius: 20px;
+      padding: 16px 8px;
+      background: white;
+      box-shadow: 0 3px 12px #34345412;
+      color: #303451;
+    }
+    .card:active { transform: scale(.98); }
+    .emoji { display: block; font-size: 38px; margin-bottom: 8px; }
+    .card strong { font-size: 16px; }
+    .activity {
+      background: white;
+      border-radius: 22px;
+      padding: 20px;
+      margin-top: 16px;
+      text-align: center;
+    }
+    .big { font-size: 65px; margin: 12px; }
+    .choices { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .choice, .action {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: #e3eaff;
+      color: #303451;
+    }
+    .action { background: #6758d8; color: white; margin: 5px; }
+    .back { background: #ffe5a5; color: #303451; }
+    .feedback { min-height: 28px; font-weight: bold; }
+    .hidden { display: none; }
+    .search {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      font: inherit;
+      margin-bottom: 14px;
+    }
+    canvas {
+      width: 100%;
+      height: 300px;
+      border: 2px dashed #d4c9f6;
+      border-radius: 14px;
+      touch-action: none;
+      background: white;
+    }
+    footer { text-align: center; padding: 25px; color: #6d6d80; }
+    @media (min-width: 600px) {
+      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="font-size:40px">🦊 🐼 🐰</div>
+    <h1>Little Genius Club 🌈</h1>
+    <p>Big discoveries for little learners!</p>
+    <div class="stars">⭐ Stars: <span id="stars">0</span></div>
+  </header>
+
+  <main>
+    <section id="home">
+      <h2>What shall we learn today?</h2>
+      <input id="search" class="search" placeholder="🔎 Find an activity..." aria-label="Search activities">
+      <div class="grid" id="menu">
+        <button class="card" data-name="abc letters alphabet" onclick="openActivity('abc')"><span class="emoji">🔤</span><strong>ABC Learning</strong></button>
+        <button class="card" data-name="numbers counting maths" onclick="openActivity('numbers')"><span class="emoji">🔢</span><strong>Counting Fun</strong></button>
+        <button class="card" data-name="spelling words" onclick="openActivity('spelling')"><span class="emoji">📝</span><strong>Spell a Word</strong></button>
+        <button class="card" data-name="objects animals fruits identification" onclick="openActivity('objects')"><span class="emoji">🐯</span><strong>Guess the Object</strong></button>
+        <button class="card" data-name="drawing art paint" onclick="openActivity('drawing')"><span class="emoji">🎨</span><strong>Drawing Studio</strong></button>
+        <button class="card" data-name="rhymes songs music" onclick="openActivity('rhymes')"><span class="emoji">🎵</span><strong>Rhyme Time</strong></button>
+        <button class="card" data-name="rewards stars progress" onclick="openActivity('rewards')"><span class="emoji">🏆</span><strong>My Rewards</strong></button>
+        <button class="card" data-name="parents grown ups settings privacy" onclick="openActivity('parents')"><span class="emoji">👨‍👩‍👧</span><strong>For Parents</strong></button>
+      </div>
+    </section>
+
+    <section id="activity" class="activity hidden">
+      <button class="choice back" onclick="goHome()">← Home</button>
+      <h2 id="activityTitle">Let's learn!</h2>
+      <div id="activityBody"></div>
+    </section>
+  </main>
+
+  <footer>Made with 💛 for curious little minds.</footer>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let stars = Number(localStorage.getItem('lgc-stars') || 0);
+    let question = 0;
+    let drawing = false;
+    let lastX = 0, lastY = 0;
+    $('stars').textContent = stars;
+
+    $('search').addEventListener('input', e => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('#menu .card').forEach(card => {
+        card.style.display = card.dataset.name.includes(term) ? '' : 'none';
+      });
+    });
+
+    function earnStar() {
+      stars++;
+      localStorage.setItem('lgc-stars', stars);
+      $('stars').textContent = stars;
+    }
+    function openActivity(name) {
+      $('home').classList.add('hidden');
+      $('activity').classList.remove('hidden');
+      const body = $('activityBody');
+      body.innerHTML = '';
+      question = 0;
+      const titles = {
+        abc: '🔤 ABC Learning', numbers: '🔢 Counting Fun',
+        spelling: '📝 Spell a Word', objects: '🐯 Guess the Object',
+        drawing: '🎨 Drawing Studio', rhymes: '🎵 Rhyme Time',
+        rewards: '🏆 My Rewards', parents: '👨‍👩‍👧 For Parents'
+      };
+      $('activityTitle').textContent = titles[name];
+      if (name === 'abc') showABC();
+      else if (name === 'numbers') showNumbers();
+      else if (name === 'spelling') showSpelling();
+      else if (name === 'objects') showObjects();
+      else if (name === 'drawing') showDrawing();
+      else if (name === 'rhymes') showRhymes();
+      else if (name === 'rewards') showRewards();
+      else if (name === 'parents') showParents();
+    }
+    function goHome() {
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      $('activity').classList.add('hidden');
+      $('home').classList.remove('hidden');
+    }
+    function speak(text) {
+      if (!('speechSynthesis' in window)) {
+        alert('Sound is not supported by this browser.');
+        return;
+      }
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.8;
+      speechSynthesis.speak(utterance);
+    }
+    function showABC() {
+      const letters = [
+        ['A','Apple','🍎'],['B','Ball','⚽'],['C','Cat','🐱'],
+        ['D','Dog','🐶'],['E','Elephant','🐘'],['F','Fish','🐟'],
+        ['G','Grapes','🍇'],['H','House','🏠'],['I','Ice cream','🍦'],
+        ['J','Juice','🧃'],['K','Kite','🪁'],['L','Lion','🦁'],
+        ['M','Moon','🌙'],['N','Nest','🪺'],['O','Orange','🍊'],
+        ['P','Penguin','🐧'],['Q','Queen','👑'],['R','Rabbit','🐰'],
+        ['S','Sun','☀️'],['T','Tiger','🐯'],['U','Umbrella','☂️'],
+        ['V','Van','🚐'],['W','Whale','🐳'],['X','Xylophone','🎼'],
+        ['Y','Yo-yo','🪀'],['Z','Zebra','🦓']
+      ];
+      const item = letters[question % letters.length];
+      $('activityBody').innerHTML =
+        '<div class="big">'+item[0]+' '+item[2]+'</div>'+
+        '<h3>'+item[0]+' is for '+item[1]+'</h3>'+
+        '<button class="action" onclick="speak(\\''+item[0]+' is for '+item[1]+'\\')">🔊 Listen</button>'+
+        '<button class="action" onclick="question++;showABC()">Next letter ➜</button>';
+    }
+    function showNumbers() {
+      const n = question % 20 + 1;
+      const correct = n;
+      const opts = [...new Set([correct, Math.max(1,correct-1),correct+1,Math.max(1,correct-2)])].sort(()=>Math.random()-.5);
+      $('activityBody').innerHTML =
+        '<div class="big">'+('🍎'.repeat(Math.min(n,10)))+'</div>'+
+        '<h3>Find number '+n+'</h3><div class="choices">'+
+        opts.map(v=>'<button class="choice" onclick="answerNumber('+v+','+correct+')">'+v+'</button>').join('')+
+        '</div><p id="feedback" class="feedback"></p>';
+    }
+    function answerNumber(v, correct) {
+      const f=$('feedback');
+      if(v===correct){f.textContent='🎉 Correct! Great job!';earnStar();}
+      else f.textContent='😊 Try again!';
+    }
+    function showSpelling() {
+      const words=[['CAT','🐱'],['SUN','☀️'],['DOG','🐶'],['BUS','🚌'],['HAT','🎩']];
+      const item=words[question%words.length];
+      $('activityBody').innerHTML='<div class="big">'+item[1]+'</div><h3>How do you spell this word?</h3><button class="action" onclick="speak(\\''+item[0]+'\\')">🔊 Hear word</button><p><input id="word" class="search" style="width:180px" maxlength="8" placeholder="Type the word" aria-label="Type the spelling"></p><button class="action" onclick="checkWord(\\''+item[0]+'\\')">Check</button><button class="choice" onclick="question++;showSpelling()">Next word</button><p id="feedback" class="feedback"></p>';
+    }
+    function checkWord(correct) {
+      if($('word').value.trim().toUpperCase()===correct){$('feedback').textContent='⭐ Brilliant spelling!';earnStar();}
+      else $('feedback').textContent='Almost! Try again.';
+    }
+    function showObjects() {
+      const items=[['🐶','Dog'],['🍎','Apple'],['🚗','Car'],['🐟','Fish'],['🍌','Banana'],['🚌','Bus'],['🐱','Cat'],['🌞','Sun']];
+      const item=items[question%items.length];
+      const choices=[item[1],items[(question+2)%items.length][1],items[(question+4)%items.length][1]].sort(()=>Math.random()-.5);
+      $('activityBody').innerHTML='<div class="big">'+item[0]+'</div><h3>What is this?</h3><div class="choices">'+choices.map(c=>'<button class="choice" onclick="answerObject(\\''+c+'\\',\\''+item[1]+'\\')">'+c+'</button>').join('')+'</div><p id="feedback" class="feedback"></p><button class="action" onclick="question++;showObjects()">Next ➜</button>';
+    }
+    function answerObject(v, correct) {
+      if(v===correct){$('feedback').textContent='🎉 You got it!';earnStar();}
+      else $('feedback').textContent='Try once more!';
+    }
+    function showDrawing() {
+      $('activityBody').innerHTML='<p>Draw anything you imagine!</p><label>Colour <input id="colour" type="color" value="#6758d8"></label> <label>Brush <input id="brush" type="range" min="2" max="25" value="6"></label><p><button class="choice" onclick="setEraser()">Eraser</button><button class="choice" onclick="clearCanvas()">Clear</button><button class="action" onclick="saveDrawing()">Save PNG</button></p><canvas id="canvas" width="700" height="400"></canvas>';
+      const canvas=$('canvas'),ctx=canvas.getContext('2d');
+      ctx.lineCap='round';ctx.lineJoin='round';
+      function point(e) {
+        const r=canvas.getBoundingClientRect();
+        return {x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};
+      }
+      canvas.onpointerdown=e=>{drawing=true;const p=point(e);lastX=p.x;lastY=p.y;canvas.setPointerCapture(e.pointerId);};
+      canvas.onpointermove=e=>{if(!drawing)return;const p=point(e);ctx.strokeStyle=$('colour').value;ctx.lineWidth=$('brush').value;ctx.globalCompositeOperation=ctx.isErasing?'destination-out':'source-over';ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.stroke();lastX=p.x;lastY=p.y;};
+      canvas.onpointerup=canvas.onpointercancel=()=>drawing=false;
+      ctx.isErasing=false;
+    }
+    function setEraser(){const c=$('canvas');if(c)c.getContext('2d').isErasing=true;}
+    function clearCanvas(){const c=$('canvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);}
+    function saveDrawing(){const c=$('canvas');if(!c)return;const a=document.createElement('a');a.download='little-genius-drawing.png';a.href=c.toDataURL('image/png');a.click();}
+    function showRhymes() {
+      const rhymes=[
+        ['Twinkle, Twinkle','A little star shining in the night.'],
+        ['Rainy Day','Pitter-patter, raindrops play; little clouds float away.'],
+        ['Happy Little Bunny','Hop, hop, hop along; happy bunny sings a song.'],
+        ['Counting Song','One, two, three, come count with me! Four, five, six, as happy as can be!']
+      ];
+      $('activityBody').innerHTML='<input id="rhymeSearch" class="search" placeholder="Search rhymes..." oninput="filterRhymes()"><div id="rhymeList">'+rhymeCards(rhymes)+'</div>';
+    }
+    const rhymeData=[
+      ['Twinkle, Twinkle','A little star shining in the night.'],
+      ['Rainy Day','Pitter-patter, raindrops play; little clouds float away.'],
+      ['Happy Little Bunny','Hop, hop, hop along; happy bunny sings a song.'],
+      ['Counting Song','One, two, three, come count with me! Four, five, six, as happy as can be!']
+    ];
+    function rhymeCards(data){return data.map(r=>'<div class="activity"><h3>'+r[0]+'</h3><p>'+r[1]+'</p><button class="action" onclick="speak(\\''+r[0]+'. '+r[1]+'\\')">▶ Play</button></div>').join('');}
+    function filterRhymes(){const q=$('rhymeSearch').value.toLowerCase();$('rhymeList').innerHTML=rhymeCards(rhymeData.filter(r=>(r[0]+' '+r[1]).toLowerCase().includes(q)));}
+    function showRewards() {
+      $('activityBody').innerHTML='<div class="big">🏆</div><h3>You have '+stars+' stars!</h3><p>Keep learning and earning stars.</p><button class="choice" onclick="question=0;openActivity(\\'abc\\')">Learn ABC</button>';
+    }
+    function showParents() {
+      $('activityBody').innerHTML='<h3>Grown-up corner</h3><p>Progress is stored only in this browser on this device.</p><p>Stars earned: '+stars+'</p><p>This simple demo gate is not secure parental authentication.</p><button class="choice" onclick="if(confirm(\\'Reset all stars?\\')){stars=0;localStorage.setItem(\\'lgc-stars\\',0);$(\\'stars\\').textContent=0;showParents();}">Reset stars</button>';
+    }
+  </script>
+</body>
+        </html>
