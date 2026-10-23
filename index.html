@@ -144,6 +144,11 @@
         card.style.display = card.dataset.name.includes(term) ? '' : 'none';
       });
     });
+document.querySelectorAll('#menu .card').forEach(card => {
+  card.addEventListener('click', () => {
+    openActivity(card.dataset.name);
+  });
+});
 
     function earnStar() {
       stars++;
