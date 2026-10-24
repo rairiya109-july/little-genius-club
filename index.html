@@ -146,7 +146,7 @@
     });
 document.querySelectorAll('#menu .card').forEach(card => {
   card.addEventListener('click', () => {
-    openActivity(card.dataset.name);
+    openActivity(card.dataset.name.split(' ')[0]);
   });
 });
 
